@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+doimagename="hwdm/dostreisand"
+sudo docker build --force-rm --tag "${doimagename}:orig" .
