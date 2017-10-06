@@ -3,6 +3,7 @@ FROM        hwdm/apbase
 MAINTAINER      Howard Mei      <howardleomei@gmail.com>
 
 ENV         REPO_URL="https://github.com/entaopy/dostreisand.git"
+ENV         REPO_BRN="master"
 ENV         DEBUG_MODE=no
 ENV         PLAYBOOK_PORT=22
 # You may use the official repo: https://github.com/jlund/streisand
@@ -14,7 +15,7 @@ RUN         apk-install bash curl curl-dev build-base libffi-dev linux-headers o
             pip install --upgrade msrest msrestazure "azure>=2.0.0rc5" packaging linode-python pyrax PyCrypto
 
 # Clone the latest streisand code from the master branch
-RUN         git clone -b master ${REPO_URL} /streisand
+RUN         git clone -b ${REPO_BRN} ${REPO_URL} /streisand
 
 WORKDIR     /streisand
 
