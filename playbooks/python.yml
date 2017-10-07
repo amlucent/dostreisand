@@ -12,4 +12,7 @@
       raw: apt update -y && apt install python -y
       args:
         executable: /bin/bash
+      register: python_rawinstall
+      when: not (python_rawinstall is defined)
+
 ...

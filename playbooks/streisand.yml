@@ -1,9 +1,6 @@
 ---
 - include: python.yml
-
-- name: Prepare lets-encrypt account info
-  include: lets-encrypt.yml
-  when: streisand_letsenc_enabled
+- include: lets-encrypt.yml
 
 - name: Collect diagnostics in case of error
   hosts: localhost

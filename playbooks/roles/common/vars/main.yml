@@ -65,7 +65,7 @@ streisand_languages:
     file_suffix: ""
     language_name: "English"
     tor_locale: "en-US"
-  fr:
-    file_suffix: "-fr"
-    language_name: "Français"
-    tor_locale: "fr"
+#  fr:
+#    file_suffix: "-fr"
+#    language_name: "Français"
+#    tor_locale: "fr"
