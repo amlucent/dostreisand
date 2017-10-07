@@ -1,0 +1,2 @@
+bbr_minimal_kernel_vernum: "4.10"
+use_tsunami_mode: yes

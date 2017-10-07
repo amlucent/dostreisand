@@ -1,4 +1,7 @@
 ---
+- name: Include the site variables
+  include_vars: "{{ lookup('env','HOME') }}/.streisand/site.yml"
+
 - name: "Determine the git revision of the current Streisand clone"
   command: git rev-parse HEAD
   register: streisand_diagnostics_git_rev

@@ -1,0 +1,69 @@
+---
+# We have "{{ ansible_kernel | version_compare(new_kernel_vernum, '<') }}" in main task
+# so here we don't repeat the comparison and use the version string checking instead.
+# when cannot use {{ }}, so we use ~ instead: https://github.com/ansible/ansible/issues/22397
+
+- name: Check if linux-headers-all is installed
+  command: dpkg-query -f '${Package}\n' -W 'linux-headers-{{ new_kernel_version }}'
+  ignore_errors: true
+  register: linux_headers_all_check
+
+- name: Download linux-headers-all with check (sha256)
+  register: linux-headers-all-download
+  get_url:
+    url: "{{ new_kernel_onlinepath }}/linux-headers-{{ new_kernel_version }}_{{ new_kernel_version }}.{{ new_kernel_release }}_all.deb"
+    dest: "{{ new_kernel_offlinedir }}/linux-headers-{{ new_kernel_version }}_{{ new_kernel_version }}.{{ new_kernel_release }}_all.deb"
+    checksum: "{{ headers_all_sha256sum }}"
+  async: 300
+  poll: 5
+  when: "new_kernel_version not in linux_headers_all_check.stdout"
+
+- name: Install linux-headers-all
+  apt: deb="{{ new_kernel_offlinedir }}/linux-headers-{{ new_kernel_version }}_{{ new_kernel_version }}.{{ new_kernel_release }}_all.deb"
+  when: "new_kernel_version not in linux_headers_all_check.stdout"
+  register: linux_headers_all
+
+- name: Check if linux-headers-generic-amd64 is installed
+  command: dpkg-query -f '${Package}\n' -W 'linux-headers-{{ new_kernel_version }}-generic'
+  ignore_errors: true
+  register: linux_headers_generic_amd64_check
+
+- name: Download linux-headers-generic-amd64 with check (sha256)
+  get_url:
+    url: "{{ new_kernel_onlinepath }}/linux-headers-{{ new_kernel_version }}-generic_{{ new_kernel_version }}.{{ new_kernel_release }}_amd64.deb"
+    dest: "{{ new_kernel_offlinedir }}/linux-headers-{{ new_kernel_version }}-generic_{{ new_kernel_version }}.{{ new_kernel_release }}_amd64.deb"
+    checksum: "{{ headers_generic_amd64_sha256sum }}"
+  async: 300
+  poll: 5
+  when: "new_kernel_version not in linux_headers_generic_amd64_check.stdout"
+
+- name: Install linux-headers-generic-amd64
+  apt: deb="{{ new_kernel_offlinedir }}/linux-headers-{{ new_kernel_version }}-generic_{{ new_kernel_version }}.{{ new_kernel_release }}_amd64.deb"
+  when: "new_kernel_version not in linux_headers_generic_amd64_check.stdout"
+  register: linux_headers_generic_amd64
+
+
+
+- name: Check if linux-image-generic-amd64 is installed
+  command: dpkg-query -f '${Package}\n' -W 'linux-image-{{ new_kernel_version }}-generic'
+  ignore_errors: true
+  register: linux_image_generic_amd64_check
+
+- name: Download linux-image-generic-amd64 with check (sha256)
+  get_url:
+    url: "{{ new_kernel_onlinepath }}/linux-image-{{ new_kernel_version }}-generic_{{ new_kernel_version }}.{{ new_kernel_release }}_amd64.deb"
+    dest: "{{ new_kernel_offlinedir }}/linux-image-{{ new_kernel_version }}-generic_{{ new_kernel_version }}.{{ new_kernel_release }}_amd64.deb"
+    checksum: "{{ image_generic_amd64_sha256sum }}"
+  async: 1800
+  poll: 10
+  when: "new_kernel_version not in linux_image_generic_amd64_check.stdout"
+
+- name: Install linux-image-generic-amd64
+  apt: deb="{{ new_kernel_offlinedir }}/linux-image-{{ new_kernel_version }}-generic_{{ new_kernel_version }}.{{ new_kernel_release }}_amd64.deb"
+  when: "new_kernel_version not in linux_image_generic_amd64_check.stdout"
+  register: linux_image_generic_amd64
+
+- name: Reboot and wait for server coming back
+  include: reboot_and_wait.yml
+  when: linux_headers_all|changed and linux_headers_generic_amd64|changed and linux_image_generic_amd64|changed
+  register: reboot_and_wait

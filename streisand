@@ -6,6 +6,24 @@ set -e
 
 echo -e "\n\033[38;5;255m\033[48;5;234m\033[1m  S T R E I S A N D  \033[0m\n"
 
+if [ -n "${DEBUG_MODE}" ] && [ "${DEBUG_MODE}" == 'yes' ]; then
+    echo "Running in debug mode at ${HOSTNAME}:/$(pwd)"
+    echo "$(ls -R $(pwd)/*)"
+fi
+
+if [ -n "${ANSIBLE_SSH_PEM}" ] && [ -f "${ANSIBLE_SSH_PEM}" ]; then
+    echo "Streisand is using ${ANSIBLE_SSH_PEM} as the Ansible SSH private key."
+else
+    ANSIBLE_SSH_PEM="$HOME/.ssh/id_rsa"
+    if [ -n "${ANSIBLE_SSH_PEM}" ] && [ -f "${ANSIBLE_SSH_PEM}" ]; then
+        echo "Streisand is using ${ANSIBLE_SSH_PEM} as the Ansible SSH private key."
+    else
+        echo "ANSIBLE_SSH_PEM is NOT set or the keyfile ${ANSIBLE_SSH_PEM} is missing!"
+        echo "exiting ... ..."
+        exit 1
+    fi
+fi
+
 # Update the PYTHONPATH to include the monkey patch directory for Streisand
 # workarounds packaged as Python monkey patches
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
@@ -116,21 +134,8 @@ function run_genesis() {
   if [ -z "${GENESIS_PLAYBOOK}" ]; then
     GENESIS_PLAYBOOK=streisand.yml
   fi
-  local GENESIS_INVENTORY=$2
-  if [ -z "${GENESIS_INVENTORY}" ]; then
-    GENESIS_INVENTORY=inventories/inventory
-  fi
-  # Customize the Streisand services that will be installed
-  customize
-  # Ensure that the customization hasn't resulted in something inconsistent
-  validate
-  # Run the specified genesis playbook with the specified Ansible inventory
-  echo; echo; ansible-playbook \
-    -i $GENESIS_INVENTORY \
-    --extra-vars="@$GLOBAL_VARS" \
-    --extra-vars="@$DEFAULT_SITE_VARS" \
-    --extra-vars="@$SITE_VARS" \
-    "playbooks/$GENESIS_PLAYBOOK"
+  echo; echo;
+  ansible-playbook -e "debug_mode=${DEBUG_MODE:-'no'}" -i inventories/inventory --extra-vars="@$GLOBAL_VARS" --extra-vars="@$SITE_VARS" "playbooks/$GENESIS_PLAYBOOK"
 }
 
 # be_careful_friend asks you to pay attention because you're about to do
@@ -155,7 +160,8 @@ ARE YOU 100% SURE THAT YOU WISH TO CONTINUE?
 
 Please enter the word 'streisand' to continue: "
 
-  run_genesis localhost.yml inventories/inventory-local-provision
+  echo; echo;
+  ansible-playbook -e "debug_mode=${DEBUG_MODE:-'no'}" -i inventories/inventory-local-provision --extra-vars="@$GLOBAL_VARS" --extra-vars="@$SITE_VARS" playbooks/localhost.yml
 }
 
 function existing_server() {
@@ -183,13 +189,22 @@ Please enter the word 'streisand' to continue: "
 [localhost]
 localhost ansible_connection=local ansible_python_interpreter=python
 [streisand-host]
-$SERVER_IP ansible_user=$SSH_USER
+${SERVER_IP} ansible_user=${SSH_USER} ansible_port=${PLAYBOOK_PORT:-22}
 EOF
+
+  # Test a SSH connection to the server using the key Streisand assumes will be
+  # used for server access
+  rm -f /root/.ssh/known_hosts 2>/dev/null
+  echo "Testing ssh connection to ${SSH_USER}@${SERVER_IP}:${PLAYBOOK_PORT:-22} ... ..."
+  ssh -o 'StrictHostKeyChecking no' -i "${ANSIBLE_SSH_PEM}" "${SSH_USER}@${SERVER_IP}" -p "${PLAYBOOK_PORT:-22}" -o BatchMode=yes -t true
 
   # Create the inventory file
   echo "$TEMPL" > inventories/inventory-existing
   # Invoke the Streisand playbook on the existing server inventory
-  run_genesis existing-server.yml inventories/inventory-existing
+  echo; echo;
+  # Customize the options manually
+  customize
+  ansible-playbook -e "debug_mode=${DEBUG_MODE:-'no'}" -i inventories/inventory-existing --extra-vars="@$GLOBAL_VARS" --extra-vars="@$SITE_VARS" playbooks/existing-server.yml
 }
 
 # Make sure the system is ready for the Streisand playbooks

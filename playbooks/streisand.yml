@@ -1,6 +1,9 @@
 ---
 - import_playbook: python.yml
-- import_playbook: lets-encrypt.yml
+
+- name: Prepare lets-encrypt account info
+  import_playbook: lets-encrypt.yml
+  when: streisand_letsenc_enabled
 
 - name: Collect diagnostics in case of error
   hosts: localhost
@@ -12,13 +15,18 @@
 - name: Configure the Server and install required software
 # ========================================================
   hosts: streisand-host
-
   remote_user: "root"
   become: true
-
+  vars_files:
+    - "{{ lookup('env','HOME') }}/.streisand/site.yml"
   roles:
+    - validation
+    - role: kernel-upgrade
+      when: streisand_upgrade_kernel
     - common
     - ssh
+    - role: bbr-tsunami
+      when: streisand_turnon_bbrtcp
     # OpenConnect must be set up before L2TP/IPsec in order to avoid
     # compilation issues.
     - role: openconnect
@@ -39,13 +47,12 @@
       when: not streisand_ci and streisand_tor_enabled
     - sslh
     - monit
-    - ufw
     - role: wireguard
       when: streisand_wireguard_enabled
     # streisand_le_enabled is set in lets-encrypt.yml based on user input.
     # lets-encrypt roles sets le_ok, which is used by streisand-gateway.
     - role: lets-encrypt
-      when: streisand_le_enabled
+      when: streisand_letsenc_enabled and streisand_le_enabled
     - streisand-mirror
     - streisand-gateway
 ...

@@ -12,6 +12,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+Port 22
+Protocol 2
+LoginGraceTime 120
+StrictModes yes
+PrintMotd yes
+KeepAlive yes
+Compression yes
+
 # Supported HostKey algorithms by order of preference.
 HostKey /etc/ssh/ssh_host_ed25519_key
 HostKey /etc/ssh/ssh_host_rsa_key
@@ -28,7 +36,10 @@ AuthenticationMethods publickey
 PermitRootLogin Yes
 
 # Disable logging.
-LogLevel QUIET
+# LogLevel QUIET
+
+SyslogFacility AUTH
+LogLevel INFO
 
 # Ensure that logging is disabled for SFTP connections as well.
 Subsystem sftp  /usr/lib/openssh/sftp-server -f AUTHPRIV -l QUIET

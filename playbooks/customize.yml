@@ -12,6 +12,10 @@
       prompt: "How many VPN client profiles should be generated per-service? Press enter for default "
       default: 5
       private: no
+    - name: streisand_letsenc_enabled
+      prompt: "Enable Lets-encrypt? Press enter for default "
+      default: "no"
+      private: no
     - name: streisand_l2tp_enabled
       prompt: "Enable L2TP/IPSec? Press enter for default "
       default: "yes"
@@ -58,6 +62,10 @@
         path: "{{ streisand_site_vars }}"
         regexp: "^vpn_clients: [\\d]+$"
         line: "vpn_clients: {{ vpn_clients }}"
+    - lineinfile:
+        path: "{{ streisand_site_vars }}"
+        regexp: "^streisand_letsenc_enabled: (?:yes|no)$"
+        line: "streisand_letsenc_enabled: {{ streisand_letsenc_enabled }}"
     - lineinfile:
         path: "{{ streisand_site_vars }}"
         regexp: "^streisand_l2tp_enabled: (?:yes|no)$"

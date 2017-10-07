@@ -1,0 +1,9 @@
+new_kernel_vernum: "4.12.6"
+new_kernel_version: "4.12.6-041206"
+new_kernel_release: "201708111232"
+new_kernel_onlinepath: "http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12.6"
+new_kernel_offlinedir: "/tmp/debs"
+# See http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.12.6/CHECKSUMS
+headers_all_sha256sum: "sha256:968ffca04a9c103a57b6abafa6790af567120c8b879001a99dc90778cf3fddd9"
+headers_generic_amd64_sha256sum: "sha256:3abf29a772fb055e471ef288df62f86271ec1738037f92533fd17569a461b5b1"
+image_generic_amd64_sha256sum: "sha256:665110f531ed729a6367e95fd92e2c22967d736f4d2e6a163920118c52325141"

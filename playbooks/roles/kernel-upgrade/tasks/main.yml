@@ -1,0 +1,77 @@
+---
+- name: Gather fact filtering for ansible_kernel before upgrade
+  setup: filter='ansible_kernel'
+
+- name: Extract ansible_kernel_vernum from ansible_kernel
+  set_fact:
+    ansible_kernel_vernum: "{{ ansible_kernel.split('-')[0] }}"
+
+- name: Shall I update linux kernel?
+  debug: msg="Current kernel {{ ansible_kernel_vernum }} v.s. Minimal Kernel {{ minimal_kernel_vernum }}"
+
+- name: Install purge-old-kernels utility
+  apt:
+    name: byobu
+    state: present
+
+- name: Install update-notifier-common utility
+  apt:
+    name: update-notifier-common
+    state: present
+
+- name: Remove bcmwl-kernel-source to avoid error
+  apt:
+    name: bcmwl-kernel-source
+    state: absent
+
+- name: Creates temp dir for debs
+  file: path=/tmp/debs state=directory owner=root group=root mode=0775
+
+- name: Print system facts before kernel upgrade
+  debug:
+    var: hostvars[inventory_hostname]
+    verbosity: 0
+  when: debug_mode == 'yes'
+
+- name: Print playbook vars before kernel upgrade
+  debug:
+    var: vars
+    verbosity: 0
+  when: debug_mode == 'yes'
+
+- name: Update linux kernel by installing downloaded debs
+  include: download_install_kernel.yml
+  when: ansible_kernel_vernum | version_compare(minimal_kernel_vernum, '<')
+  register: download_install_kernel
+
+- name: Regather fact filtering for ansible_kernel after upgrade
+  setup: filter='ansible_kernel'
+
+- name: Extract ansible_kernel_vernum from ansible_kernel
+  set_fact:
+    ansible_kernel_vernum: "{{ ansible_kernel.split('-')[0] }}"
+
+- name: Is linux kernel upgrade successful?
+  debug: msg="Current kernel {{ ansible_kernel }} v.s. New kernel {{ new_kernel_version }}"
+
+- name: Purge old kernel images
+  command: purge-old-kernels
+  async: 1
+  poll: 0
+  become: false
+  ignore_errors: true
+  when: ansible_kernel_vernum | version_compare(new_kernel_vernum, '>=')
+
+- name: Clean temp dir for debs
+  file:
+    state: absent
+    path: "/tmp/debs/"
+  when: ansible_kernel_vernum | version_compare(new_kernel_vernum, '>=')
+
+- name: Remove useless packages from the cache
+  apt:
+    autoclean: yes
+
+- name: Remove dependencies that are no longer required
+  apt:
+    autoremove: yes
