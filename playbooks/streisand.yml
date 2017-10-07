@@ -15,7 +15,8 @@
 
   remote_user: "root"
   become: true
-
+  vars_files:
+    - "{{ lookup('env','HOME') }}/.streisand/site.yml"
   roles:
     - common
     - ssh
