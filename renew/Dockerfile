@@ -15,6 +15,7 @@ RUN         rm -rf /streisand && git clone -b ${REPO_BRN} ${REPO_URL} /streisand
 WORKDIR     /streisand
 
 VOLUME      /root/.ssh
+VOLUME      /root/.streisand
 VOLUME      /streisand
 
 CMD         ["/streisand/streisand"]
