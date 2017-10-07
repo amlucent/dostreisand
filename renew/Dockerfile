@@ -1,4 +1,4 @@
-FROM        hwdm/dostreisand:orig
+FROM        hwdm/dostreisand:base
 # hwdm/apbase contains some useful shell utils. You may replace it with alpine:3.5 instead.
 MAINTAINER      Howard Mei      <howardleomei@gmail.com>
 
@@ -10,12 +10,10 @@ ENV         PLAYBOOK_PORT=22
 # I changed the ssh default port and plan to do more in the future.
 
 # Renew the streisand by cloning the latest streisand code from the master branch
-RUN         rm -rf /streisand && git clone -b ${REPO_BRN} ${REPO_URL} /streisand
+RUN         git clone -b ${REPO_BRN} ${REPO_URL} /streisand
 
 WORKDIR     /streisand
-
-VOLUME      /root/.ssh
-VOLUME      /root/.streisand
 VOLUME      /streisand
+VOLUME      /root/.streisand
 
 CMD         ["/streisand/streisand"]
