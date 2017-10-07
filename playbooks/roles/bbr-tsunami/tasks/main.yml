@@ -1,0 +1,46 @@
+---
+- name: Is linux kernel upgrade successful?
+  debug: msg="Current kernel {{ ansible_kernel }} v.s. Required kernel {{ bbr_minimal_kernel_vernum }}"
+
+- name: Check if bbr or tsunami is available
+  command: sysctl net.ipv4.tcp_available_congestion_control
+  register: bbrtcp_avail
+
+- name: Turn on bbr tcp congestion control algorithm
+  include: bbrtcp.yml
+  when: streisand_turnon_bbrtcp and (not use_tsunami_mode) and bbrtcp_avail.stdout.find("bbr") == -1 and ansible_kernel_vernum | version_compare(bbr_minimal_kernel_vernum, '>=')
+
+- name: Turn on tsunami tcp congestion control algorithm
+  include: tsunami.yml
+  when: streisand_turnon_bbrtcp and use_tsunami_mode and bbrtcp_avail.stdout.find("tsunami") == -1 and ansible_kernel_vernum | version_compare(bbr_minimal_kernel_vernum, '>=')
+
+- name: Check if bbr or tsunami is enabled
+  command: sysctl net.ipv4.tcp_congestion_control
+  register: bbrtcp_enabled
+
+- name: Enable the bbr booster
+  sysctl:
+    name: net.ipv4.tcp_congestion_control
+    value: "bbr"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  when: streisand_turnon_bbrtcp and (not use_tsunami_mode) and bbrtcp_enabled.stdout.find("bbr") == -1
+
+- name: Enable the tsunami booster
+  sysctl:
+    name: net.ipv4.tcp_congestion_control
+    value: "tsunami"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  when: streisand_turnon_bbrtcp and (not use_tsunami_mode) and bbrtcp_enabled.stdout.find("tsunami") == -1
+
+- name: Disable the bbr or tsunami and restore hybla
+  sysctl:
+    name: net.ipv4.tcp_congestion_control
+    value: "hybla"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  when: not streisand_turnon_bbrtcp

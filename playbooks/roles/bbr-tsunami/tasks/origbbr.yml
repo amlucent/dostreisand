@@ -1,0 +1,50 @@
+---
+- name: Copy the bbr sysctl if turnon_bbr
+  copy:
+    src: "90-bbr-sysctl.conf"
+    dest: "/etc/sysctl.d/90-bbr-sysctl.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: streisand_turnon_bbrtcp
+
+- name: Reload all sysctl configs
+  command: sysctl -p /etc/sysctl.d/*.conf
+
+- name: Check if bbr is available
+  command: sysctl net.ipv4.tcp_available_congestion_control
+  register: tcpcc_avail
+  failed_when: tcpcc_avail.stdout.find("bbr") == -1
+  when: streisand_turnon_bbrtcp
+
+- name: Enable the bbr booster
+  sysctl:
+    name: net.ipv4.tcp_congestion_control
+    value: "bbr"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  when: streisand_turnon_bbrtcp
+
+- name: Remove the bbr sysctl if turn off
+  file:
+    state: absent
+    path: "/etc/sysctl.d/99-bbr-sysctl.conf"
+    mode: 0755
+  when: not streisand_turnon_bbrtcp
+
+- name: Disable the bbr booster
+  sysctl:
+    name: net.ipv4.tcp_congestion_control
+    value: "hybla"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  when: not streisand_turnon_bbrtcp
+
+- name: Check if bbr is available
+  command: sysctl net.ipv4.tcp_available_congestion_control
+  register: tcpcc_avail
+  failed_when: tcpcc_avail.stdout.find("bbr") != -1
+  when: not streisand_turnon_bbrtcp

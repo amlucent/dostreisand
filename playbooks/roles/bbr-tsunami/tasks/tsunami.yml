@@ -1,0 +1,74 @@
+---
+- name: Creates temp dir for debs
+  file: path=/tmp/tsunami state=directory owner=root group=root mode=0775
+
+- name: Get the current uname str
+  shell: uname -r
+  ignore_errors: no
+  register: uname_result
+
+- name: Copy the tsunami source code
+  copy:
+    src: "tcp_tsunami.c"
+    dest: "/tmp/tsunami/tcp_tsunami.c"
+    owner: root
+    group: root
+
+- name: Copy the tsunami makefile
+  copy:
+    src: "Makefile"
+    dest: "/tmp/tsunami/Makefile"
+    owner: root
+    group: root
+
+- name: Compile tsumami source
+  command: make -C "/lib/modules/{{ uname_result.stdout }}/build" M=/tmp/tsunami modules CC=/usr/bin/gcc
+  args:
+    chdir: "/tmp/tsunami"
+    creates: "/tmp/tsunami/tcp_tsunami.ko"
+
+- name: Copy tsumami module
+  copy:
+    remote_src: true
+    src: "/tmp/tsunami/tcp_tsunami.ko"
+    dest: "/lib/modules/{{ uname_result.stdout }}/kernel/net/ipv4"
+    owner: root
+    group: root
+    force: yes
+    backup: yes
+
+- name: Install tsumami module
+  command: insmod tcp_tsunami.ko
+  args:
+    chdir: "/tmp/tsunami"
+
+- name: modprobe tcp_tsunami
+  modprobe:
+    name: tcp_tsunami
+
+- name: Add tcp_tsumami to /etc/modules
+  lineinfile:
+    dest: /etc/modules
+    line: tcp_tsumami
+
+- name: Regenerate modules.dep and map files
+  command: depmod -a
+
+- name: Add item to sysctl
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/90-tcp-tsunami.conf
+  with_items:
+    - name: net.core.default_qdisc
+      value: fq
+    - name: net.ipv4.tcp_congestion_control
+      value: tsunami
+
+- name: Reload all sysctl configs
+  command: sysctl -p /etc/sysctl.d/*.conf
+
+- name: Check if tsunami is available
+  command: sysctl net.ipv4.tcp_available_congestion_control
+  register: tcpcc_avail
+  failed_when: tcpcc_avail.stdout.find("tsunami") == -1

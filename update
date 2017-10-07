@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+echo "Updating procedure:"
+echo "git checkout upstream && git pull --force --no-edit upstream master"
+echo "git checkout develop && git rebase -Xtheirs upstream and here theirs = develop"
+echo "git checkout master && git rebase -Xours develop and here ours = develop"
+echo "git reset --hard HEAD~1 to remove duplicate commits from develop"
+git checkout upstream
+if !(git remote | grep -iq upstream); then
+    git remote add upstream https://github.com/StreisandEffect/streisand 2>/dev/null
+    git remote set-url --push upstream fetchonly 2>/dev/null
+fi
+git pull --force --no-edit upstream master
+

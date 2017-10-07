@@ -5,11 +5,12 @@ Vagrant.require_version ">= 1.9.0"
 Vagrant.configure(2) do |config|
 
   config.vm.box = "ubuntu/xenial64"
+  # Old box: bento/ubuntu-16.04
 
   config.vm.define "streisand-host", primary: true do |streisand|
     streisand.vm.hostname = "streisand-host"
     streisand.vm.network :private_network, ip: "10.0.0.10"
-
+    streisand.vm.network "forwarded_port", guest: 22, host: 2022, id: "ssh", auto_correct: true
     streisand.vm.provision "ansible" do |ansible|
       # NOTE: Uncomment the below line for verbose Ansible output
       # ansible.verbose = "v"
@@ -33,7 +34,7 @@ Vagrant.configure(2) do |config|
   config.vm.define "streisand-client" do |client|
     client.vm.hostname = "streisand-client"
     client.vm.network :private_network, ip: "10.0.0.11"
-
+    client.vm.network "forwarded_port", guest: 22, host: 2122, id: "ssh", auto_correct: true
     client.vm.provision "ansible" do |ansible|
       # NOTE: Uncomment the below line for verbose Ansible output
       #ansible.verbose = "v"

@@ -1,0 +1,28 @@
+---
+- name: modprobe tcp_bbr
+  modprobe:
+    name: tcp_bbr
+
+- name: Add tcp_bbr to /etc/modules
+  lineinfile:
+    dest: /etc/modules
+    line: tcp_bbr
+
+- name: Add item to sysctl
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/90-tcp-bbr.conf
+  with_items:
+    - name: net.core.default_qdisc
+      value: fq
+    - name: net.ipv4.tcp_congestion_control
+      value: bbr
+
+- name: Reload all sysctl configs
+  command: sysctl -p /etc/sysctl.d/*.conf
+
+- name: Check if bbr is available
+  command: sysctl net.ipv4.tcp_available_congestion_control
+  register: tcpcc_avail
+  failed_when: tcpcc_avail.stdout.find("bbr") == -1

@@ -1,0 +1,87 @@
+---
+# Reboot an Ubuntu machine if needed and wait for it to come back
+
+- name: Check for reboot required
+  stat: path=/var/run/reboot-required
+  register: reboot_required
+
+- name: Check for reboot required pkgs
+  stat: path=/var/run/reboot-required.pkgs
+  register: reboot_required_pkgs
+
+- name: Check for kernel mismatch
+  shell: if [ $(readlink -f /vmlinuz) != /boot/vmlinuz-$(uname -r) ]; then echo 'mismatch'; else echo 'working'; fi
+  register: kernel_mismatch
+
+- name: Yes we have to reboot
+  set_fact:
+    to_reboot: "{{ to_reboot | default(reboot_required.stat.exists == true
+        or reboot_required_pkgs.stat.exists == true
+        or kernel_mismatch.stdout.find('mismatch') != -1) }}"
+
+# if one of these is 'vagrant' we're probably deploying to a vagrant environment.
+# https://gist.github.com/yarloocll/48aa334095b31bad2d3aaadb541fbf23
+- name: Detect vagrant instance
+  set_fact:
+    is_vagrant: "{{ is_vagrant | default(
+         (ansible_ssh_user is defined and ansible_ssh_user         == 'vagrant')
+      or (ansible_user_id  is defined and ansible_user_id          == 'vagrant')
+      or (ansible_env      is defined and ansible_env['SUDO_USER'] is defined
+                                      and ansible_env['SUDO_USER'] == 'vagrant') ) }}"
+
+- name: Clean the apt cache and system
+  shell: apt autoremove -y && apt autoclean -y
+  register: apt_cleanup
+  when: (not to_reboot|bool) and (kernel_mismatch.stdout.find("working") != -1)
+
+# Generally playbooks will stop executing any more steps on a host that has a task fail but here we ignore the errors.
+- name: Rebooting remote server ...
+  command: /sbin/shutdown --reboot +1 "Ansible triggered reboot"
+  args:
+    removes: /var/run/reboot-required*
+  async: 0
+  poll: 0
+  ignore_errors: true
+  when: to_reboot|bool
+  register: rebooting
+
+# this is required in a vagrant environment due to apt caching issues after a kernel update
+- name: Reload vagrant instance ...
+  local_action: command vagrant reload "{{inventory_hostname}}"
+  async: 1
+  poll: 0
+  become: false
+  ignore_errors: true
+  when: rebooting|changed and is_vagrant|bool
+  register: reloading
+
+# Ansible 2.0 has deprecated the “ssh” from ansible_ssh_user, ansible_ssh_host,
+# and ansible_ssh_port to become ansible_user, ansible_host, and ansible_port.
+- name: Wait for remote server to come back
+  delegate_to: localhost
+  local_action:
+    module: wait_for
+    host: "{{ inventory_hostname }}"
+    search_regex: OpenSSH
+    port: "{{ ansible_port | default(22) }}"
+    state: started
+    delay: 60
+    timeout: 600
+    connect_timeout: 30
+  become: false
+  when: to_reboot|bool and (not is_vagrant|bool)
+
+
+- name: Wait for vagrant instance to come back
+  delegate_to: localhost
+  local_action:
+    module: wait_for
+    host: "{{ ansible_host | default(ansible_ssh_host) }}"
+    search_regex: OpenSSH
+    port: "{{ ansible_ssh_port | default(vagrant_host_port) }}"
+    state: started
+    delay: 60
+    timeout: 300
+    connect_timeout: 30
+  become: false
+  when: reloading|changed and is_vagrant|bool

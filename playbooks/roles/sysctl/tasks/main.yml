@@ -10,3 +10,15 @@
         state: present
       with_items: "{{ sysctl_values }}"
   when: ansible_virtualization_type != 'lxc'
+
+- name: Copy the optimal sysctl settings
+  copy:
+    src: "99-optimal.conf"
+    dest: "/etc/sysctl.d/99-optimal.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
+- name: Reload all sysctl configs
+  command: sysctl -p /etc/sysctl.d/*.conf

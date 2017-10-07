@@ -1,11 +1,17 @@
 ---
-# Site specific Streisand configuration.
+# Site specific Streisand configuration which will be copied to ${HOME}/.streisand/site.yml
 #
 # This file is mutated by the playbooks/customize.yml tasks when a user chooses
 # to customize which Streisand services are installed.
 
 vpn_clients: 5
+debug_mode: no
+streisand_upgrade_kernel: yes
+streisand_turnon_bbrtcp: yes
+use_tsunami_mode: yes
 
+# roles could be turned on/off here
+streisand_letsenc_enabled: no
 streisand_l2tp_enabled: yes
 streisand_openconnect_enabled: yes
 streisand_openvpn_enabled: yes
