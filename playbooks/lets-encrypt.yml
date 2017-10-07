@@ -14,7 +14,7 @@
   vars_prompt:
     - name: "streisand_domain_var"
       prompt: |
-        Which domain do you want to use to host Streisand server?
+        Which domain name do you want to use to host Streisand server?
 
         This is an optional question. If you have a domain that points to your
         Streisand server, the installation scripts can request Let's Encrypt

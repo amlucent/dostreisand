@@ -1,7 +1,7 @@
 ---
 # Use OpenSSL to generate self-signed certificates if we do not have Let's Encrypt.
 - import_tasks: openssl.yml
-  when: not le_ok
+  when: not (le_ok is defined and le_ok)
 
 # Include Let's Encrypt variables for template rendering
 - include_vars: ../../lets-encrypt/vars/main.yml
