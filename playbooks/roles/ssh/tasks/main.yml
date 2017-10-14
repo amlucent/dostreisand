@@ -8,6 +8,12 @@
     mode: 0644
   notify: Restart SSH
 
+- name: Ensure UFW allows SSH
+  ufw:
+    to_port: "{{ ssh_port }}"
+    proto: "tcp"
+    rule: "allow"
+
 - name: Generate a stronger RSA host key
   shell: "rm {{ ssh_rsa_host_private_key }} {{ ssh_rsa_host_public_key }} && ssh-keygen -h -t rsa -b {{ ssh_rsa_host_key_size }} -f {{ ssh_rsa_host_private_key }} -N '' && touch {{ ssh_rsa_host_key_change_verification }}"
   args:
