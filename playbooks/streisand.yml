@@ -44,7 +44,6 @@
       when: not streisand_ci and streisand_tor_enabled
     - sslh
     - monit
-    - ufw
     - role: wireguard
       when: streisand_wireguard_enabled
     # streisand_le_enabled is set in lets-encrypt.yml based on user input.

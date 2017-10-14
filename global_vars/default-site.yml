@@ -4,15 +4,15 @@
 # This file is mutated by the playbooks/customize.yml tasks when a user chooses
 # to customize which Streisand services are installed.
 
-vpn_clients: 5
+vpn_clients: 2
 debug_mode: no
 streisand_upgrade_kernel: yes
 streisand_turnon_bbrtcp: yes
-use_tsunami_mode: yes
+use_tsunami_mode: no
 
 # roles could be turned on/off here
 streisand_letsenc_enabled: no
-streisand_l2tp_enabled: yes
+streisand_l2tp_enabled: no
 streisand_openconnect_enabled: yes
 streisand_openvpn_enabled: yes
 streisand_shadowsocks_enabled: yes

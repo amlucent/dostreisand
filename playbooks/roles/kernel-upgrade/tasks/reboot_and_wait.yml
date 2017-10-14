@@ -76,9 +76,9 @@
   delegate_to: localhost
   local_action:
     module: wait_for
-    host: "{{ ansible_host | default(ansible_ssh_host) }}"
+    host: "{{ ansible_host | default(inventory_hostname) }}"
     search_regex: OpenSSH
-    port: "{{ ansible_ssh_port | default(vagrant_host_port) }}"
+    port: "{{ ansible_port | default(vagrant_host_port) }}"
     state: started
     delay: 60
     timeout: 300

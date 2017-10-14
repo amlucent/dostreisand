@@ -1,0 +1,43 @@
+---
+- name: Install UFW
+  apt:
+    name: ufw
+    state: "present"
+
+- name: Change the default forward policy
+  lineinfile:
+    dest: /etc/default/ufw
+    regexp: "^DEFAULT_FORWARD_POLICY"
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+
+# Configure the UFW default behaviors
+- name: Configure ufw defaults to deny incoming by default
+  ufw: direction={{ item.direction }} policy={{ item.policy }} logging=low
+  with_items:
+    - { direction: 'incoming', policy: 'deny' }
+    - { direction: 'outgoing', policy: 'allow' }
+    - { direction: 'routed', policy: 'allow' }
+
+- name: Ensure UFW allows SSH and 53 80 443 ports
+  ufw: rule={{ item.rule }} port={{ item.port }} proto={{ item.proto }}
+  with_items:
+    - { rule: 'limit', port: '{{ ansible_port | default("22") }}', proto: 'tcp' }
+    - { rule: 'allow', port: '53', proto: 'udp' }
+    - { rule: 'allow', port: '80', proto: 'tcp' }
+    - { rule: 'allow', port: '443', proto: 'tcp' }
+
+- name: Limit ssh attempts within 6 times per 30 secs
+  ufw:
+    rule: limit
+    port: '{{ ansible_port | default("22") }}'
+    proto: tcp
+    log: yes
+
+# Reloads firewall and enables firewall on boot
+- name: Enable ufw system
+  ufw: state=enabled
+
+# Restart the ufw service to make all changes work
+- service:
+    name: ufw
+    state: restarted
