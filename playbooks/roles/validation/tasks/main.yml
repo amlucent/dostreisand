@@ -1,6 +1,6 @@
 ---
 # Check SSH key exists
-- include: ssh.yml
+- import_tasks: ssh.yml
 
 - name: Validate that OpenVPN optional variables are rational
   fail:

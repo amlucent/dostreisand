@@ -7,11 +7,11 @@
   register: bbrtcp_avail
 
 - name: Turn on bbr tcp congestion control algorithm
-  include: bbrtcp.yml
+  import_tasks: bbrtcp.yml
   when: streisand_turnon_bbrtcp and (not use_tsunami_mode) and bbrtcp_avail.stdout.find("bbr") == -1 and ansible_kernel_vernum | version_compare(bbr_minimal_kernel_vernum, '>=')
 
 - name: Turn on tsunami tcp congestion control algorithm
-  include: tsunami.yml
+  import_tasks: tsunami.yml
   when: streisand_turnon_bbrtcp and use_tsunami_mode and bbrtcp_avail.stdout.find("tsunami") == -1 and ansible_kernel_vernum | version_compare(bbr_minimal_kernel_vernum, '>=')
 
 - name: Check if bbr or tsunami is enabled

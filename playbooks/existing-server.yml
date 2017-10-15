@@ -10,7 +10,7 @@
     - set_fact:
         streisand_genesis_role: "existing-server"
 
-- include: ssh-setup.yml
+- import_playbook: ssh-setup.yml
 
 - name: Check SSH access to existing server
   hosts: streisand-host

@@ -40,7 +40,7 @@
   when: debug_mode == 'yes'
 
 - name: Update linux kernel by installing downloaded debs
-  include: download_install_kernel.yml
+  import_tasks: download_install_kernel.yml
   when: ansible_kernel_vernum | version_compare(minimal_kernel_vernum, '<')
   register: download_install_kernel
 

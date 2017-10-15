@@ -14,7 +14,7 @@ fi
 if [ -n "${ANSIBLE_SSH_PEM}" ] && [ -f "${ANSIBLE_SSH_PEM}" ]; then
     echo "Streisand is using ${ANSIBLE_SSH_PEM} as the Ansible SSH private key."
 else
-    ANSIBLE_SSH_PEM="$HOME/.ssh/id_rsa"
+    ANSIBLE_SSH_PEM="/root/.ssh/id_rsa"
     if [ -n "${ANSIBLE_SSH_PEM}" ] && [ -f "${ANSIBLE_SSH_PEM}" ]; then
         echo "Streisand is using ${ANSIBLE_SSH_PEM} as the Ansible SSH private key."
     else

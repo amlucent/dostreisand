@@ -64,6 +64,6 @@
   register: linux_image_generic_amd64
 
 - name: Reboot and wait for server coming back
-  include: reboot_and_wait.yml
+  import_tasks: reboot_and_wait.yml
   when: linux_headers_all|changed and linux_headers_generic_amd64|changed and linux_image_generic_amd64|changed
   register: reboot_and_wait
